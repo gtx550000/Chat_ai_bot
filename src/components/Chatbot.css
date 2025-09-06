@@ -1,0 +1,225 @@
+/*
+ * ปรับปรุงการแสดงผลของหน้า Chatbot โดยรวม
+ */
+.chatbot-container {
+  width: 100%;
+  max-width: 600px;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/*
+ * ปรับปรุงส่วน Header
+ */
+.chatbot-header {
+  height: 56px;
+  padding: 0 16px; /* เพิ่ม padding ด้านข้าง */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #eef2ff, #fae8ff);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* เพิ่มระยะห่าง */
+}
+
+.back-arrow {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 20px;
+  color: #6366f1; /* เปลี่ยนสีให้เด่นขึ้น */
+}
+
+.header-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.header-right {
+  display: flex;
+  gap: 12px;
+  color: #6b7280;
+  font-size: 20px;
+}
+
+/*
+ * ปรับปรุงส่วน Chat Messages
+ */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px; /* เพิ่ม padding */
+  background: #f9fafb;
+}
+
+.message-row {
+  display: flex;
+  gap: 10px; /* เพิ่มระยะห่าง */
+  margin-bottom: 12px; /* เพิ่มระยะห่าง */
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+.message-row.bot {
+  justify-content: flex-start;
+}
+.message-row.system {
+  justify-content: center;
+}
+
+.avatar {
+  width: 32px; /* ขยายขนาด */
+  height: 32px; /* ขยายขนาด */
+  display: grid;
+  place-items: center;
+  background: #e5e7eb;
+  border-radius: 999px;
+  font-size: 16px; /* ขยายขนาดฟอนต์ */
+  flex: 0 0 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.message-bubble {
+  max-width: 75%; /* เพิ่มความกว้าง */
+  padding: 10px 14px; /* เพิ่ม padding */
+  border-radius: 18px; /* ปรับความโค้งมน */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  line-height: 1.5; /* เพิ่มระยะห่างระหว่างบรรทัด */
+}
+
+.message-row.user .message-bubble {
+  background: #4f46e5;
+  color: #fff;
+  border-bottom-right-radius: 4px; /* ปรับให้มุมหนึ่งแหลม */
+}
+.message-row.bot .message-bubble {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 4px;
+}
+.message-row.system .message-bubble {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+/*
+ * ปรับปรุงส่วน Mood/Understanding Bar
+ */
+.mood-understanding-bar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  border-top: 1px dashed #e5e7eb;
+  border-bottom: 1px dashed #e5e7eb;
+  background: #fefce8;
+  padding: 0 16px;
+  justify-content: center;
+}
+
+.bar-label {
+  font-size: 11px;
+  color: #6b7280;
+  letter-spacing: 0.12em;
+}
+
+/*
+ * ปรับปรุงส่วน Error Line
+ */
+.error-line {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-top: 1px solid #fecaca;
+  border-bottom: 1px solid #fecaca;
+}
+
+/*
+ * ปรับปรุงส่วน Input Area
+ */
+.input-area {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* เพิ่มระยะห่างระหว่างองค์ประกอบ */
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+
+.input-field-wrapper {
+  display: grid;
+  grid-template-columns: 380px auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.input-field {
+  height: 44px; /* เพิ่มความสูง */
+  border: 1px solid #e5e7eb;
+  border-radius: 14px; /* ปรับความโค้งมน */
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.input-field:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.input-icon {
+  width: 44px; /* เพิ่มขนาด */
+  height: 44px; /* เพิ่มขนาด */
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.input-buttons {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+.button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  font-size: 20px;
+}
+
+.button:active {
+  transform: scale(0.95);
+}
+
+.send-button {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
