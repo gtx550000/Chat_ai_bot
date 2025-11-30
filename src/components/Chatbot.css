@@ -7,7 +7,7 @@
   --border-color: #333;
   --text-primary: #ffffff;
   --text-secondary: #888888;
-  --accent-cyan: #00E5FF; /* สีฟ้าตามโลโก้ในรูป */
+  --accent-cyan: #00E5FF;
   --sidebar-width: 80px;
 }
 
@@ -19,10 +19,10 @@
 
 body {
   background-color: var(--bg-dark);
-  font-family: 'Inter', sans-serif; /* ฟอนต์อ่านง่าย ทันสมัย */
+  font-family: 'Inter', sans-serif;
   color: var(--text-primary);
   height: 100vh;
-  overflow: hidden;
+  overflow: hidden; /* ห้าม Scroll ที่ Body */
 }
 
 .dashboard-container {
@@ -31,7 +31,7 @@ body {
   width: 100%;
 }
 
-/* --- Sidebar ด้านซ้าย --- */
+/* --- Sidebar --- */
 .sidebar {
   width: var(--sidebar-width);
   background-color: #0a0a0a;
@@ -42,6 +42,7 @@ body {
   padding-top: 24px;
   gap: 30px;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .logo-box {
@@ -72,20 +73,23 @@ body {
 /* --- Main Content Area --- */
 .main-content {
   flex: 1;
+  display: flex; /* จัด Layout แนวตั้ง */
+  flex-direction: column;
+  height: 100vh; /* ความสูงเต็มจอ */
   position: relative;
-  padding: 40px 60px;
-  overflow-y: auto;
+  overflow: hidden; /* ห้าม Scroll ที่ Container ใหญ่ */
   
-  /* สร้าง Grid Background แบบในรูป */
+  /* Background Grid */
   background-image: 
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px; /* ขนาดช่องตาราง */
+  background-size: 40px 40px;
 }
 
-/* Header Section */
+/* --- Header & Team Section (ส่วนบนที่ไม่ขยับ) --- */
 .header-section {
-  margin-bottom: 50px;
+  padding: 40px 60px 0 60px;
+  flex-shrink: 0; /* ห้ามหด */
 }
 
 .welcome-text {
@@ -102,7 +106,6 @@ body {
   margin-bottom: 40px;
 }
 
-/* Filter Tags (เลียนแบบปุ่ม Content Help ในรูป) */
 .filter-tags {
   display: flex;
   gap: 15px;
@@ -125,18 +128,19 @@ body {
   border-color: var(--accent-cyan);
 }
 
-/* Team Grid Layout */
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+  padding: 0 60px;
+  flex-shrink: 0; /* ห้ามหด */
 }
 
-/* Card Design (เลียนแบบกล่องข้อความในรูป) */
+/* --- Card Styles --- */
 .member-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 16px; /* มุมโค้ง */
+  border-radius: 16px;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -150,7 +154,6 @@ body {
   transform: translateY(-5px);
 }
 
-/* รูป Avatar ยังคงเป็น 8-bit เพื่อคง Concept AI */
 .avatar-frame {
   width: 80px;
   height: 80px;
@@ -168,12 +171,12 @@ body {
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
-  filter: grayscale(100%); /* ขาวดำตามที่เคยขอ */
+  filter: grayscale(100%);
   opacity: 0.8;
 }
 
 .member-card:hover .pixel-avatar {
-  filter: grayscale(0%); /* คืนสีเมื่อ Hover */
+  filter: grayscale(0%);
   opacity: 1;
 }
 
@@ -196,98 +199,131 @@ body {
   padding: 4px 10px;
   border-radius: 6px;
   display: inline-block;
-  margin-bottom: 15px;
-  font-family: 'Inter', sans-serif;
 }
 
-.chat-input-style {
-  width: 100%;
-  background: #000;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 12px;
-  color: #666;
-  text-align: left;
-  margin-top: auto;
-  font-family: "Press Start 2P", cursive; /* ลูกเล่นเล็กน้อย */
-}
-
-/* --- Chat Input Section --- */
+/* --- CHAT SECTION (ส่วนสำคัญที่แก้) --- */
 .chat-section {
-  margin-top: 500px;
+  flex: 1; /* ขยายพื้นที่ให้เต็มจอส่วนที่เหลือ */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* เทคนิคสำคัญ: กัน Flexbox ล้นจอ */
   width: 100%;
   max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 20px auto 0 auto;
   position: relative;
 }
 
-.input-container {
-  background: rgba(40, 40, 40, 0.8);
-  border: 1px solid #444;
-  border-radius: 25px;
-  padding: 10px 10px 10px 20px;
+/* พื้นที่แสดงข้อความ (Scroll ได้เฉพาะตรงนี้) */
+.chat-history {
+  flex: 1; /* ยืดเต็มพื้นที่ เพื่อดัน Input ลงล่างสุด */
+  overflow-y: auto; /* Scroll แนวตั้ง */
+  padding: 20px 20px 20px 20px;
   display: flex;
-  align-items: center;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.3s;
+  flex-direction: column;
+  gap: 15px;
+  
+  /* Custom Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
 }
 
-.input-container:focus-within {
-  border-color: var(--accent-cyan);
+.chat-history::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-history::-webkit-scrollbar-thumb {
+  background-color: #333;
+  border-radius: 10px;
+}
+
+/* Chat Bubbles */
+.chat-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 12px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #00b4db, #0083b0);
+  color: #ffffff;
+  border-bottom-right-radius: 2px;
+  box-shadow: 0 4px 15px rgba(0, 180, 219, 0.3);
+}
+
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #333;
+  border-bottom-left-radius: 2px;
+}
+
+/* --- INPUT CONTAINER (ตรึงอยู่ด้านล่าง) --- */
+.input-container {
+  width: 100%;
+  padding: 20px;
+  background: rgba(5, 5, 5, 0.95); /* พื้นหลังเข้มบังข้อความตอน Scroll ผ่าน */
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
 }
 
 .chat-input {
   flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 16px;
-  font-family: 'Inter', sans-serif;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 14px 20px;
+  border-radius: 25px;
+  color: white;
+  font-size: 1rem;
   outline: none;
-  padding-right: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s;
 }
 
-.chat-input::placeholder {
-  color: #666;
+.chat-input:focus {
+  border-color: var(--accent-cyan);
 }
 
-/* --- Send Button & Animations --- */
 .send-btn {
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
   background: var(--accent-cyan);
   border: none;
-  border-radius: 12px;
+  border-radius: 50%;
   color: #000;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
-  overflow: hidden; /* เพื่อซ่อนไอคอนตอนบินออก */
-  position: relative;
+  transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .send-btn:hover {
-  background: #00b8cc;
-  transform: scale(1.05);
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
 }
 
-.send-btn:active {
-  transform: scale(0.95);
+.send-btn:disabled {
+  background: #333;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* ไอคอนส่งปกติ */
-.send-icon {
-  transition: all 0.3s ease;
-}
-
-/* Class ที่จะ Add เมื่อกดส่ง (Animation บินออก) */
-.send-icon.flying {
-  animation: flyAway 0.6s ease-in-out forwards;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes flyAway {
@@ -296,146 +332,8 @@ body {
   100% { transform: translate(50px, -50px) scale(0); opacity: 0; }
 }
 
-/* --- Loading / Waiting Animation (8-bit dots) --- */
-.loading-indicator {
-  display: flex;
-  gap: 4px;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  background-color: #000;
-  display: inline-block;
-  animation: pixelBounce 1s infinite;
-  image-rendering: pixelated; /* ทำให้จุดคมเป็นสี่เหลี่ยม */
-}
-
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes pixelBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-/* สถานะ Disable ปุ่มตอนส่ง */
-.send-btn.disabled {
-  background: #333;
-  cursor: not-allowed;
-  transform: none;
-}
-/* --- CHAT AREA --- */
-.chat-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* ซ่อนส่วนเกิน */
-  position: relative;
-  padding-bottom: 20px;
-}
-
-/* พื้นที่แสดงข้อความ (Scroll ได้) */
-.chat-history {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px; /* ระยะห่างระหว่างข้อความ */
-  
-  /* Custom Scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
-}
-
-/* --- CHAT BUBBLES (กล่องข้อความ) --- */
-.chat-bubble {
-  max-width: 80%; /* ความกว้างสูงสุด 80% ของจอ */
-  padding: 12px 16px;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 12px;
-  position: relative;
-  word-wrap: break-word; /* ตัดคำยาวๆ */
-  white-space: pre-wrap; /* ✅ สำคัญ: รักษารูปแบบบรรทัด (เว้นวรรค/ขึ้นบรรทัดใหม่ตาม AI) */
-  animation: fadeIn 0.3s ease-in-out;
-  font-family: inherit; /* ✅ ใช้ Font เดิมของคุณ */
-}
-
-/* สไตล์ของ USER (ชิดขวา) */
-.chat-bubble.user {
-  align-self: flex-end; /* ดันไปขวา */
-  background: linear-gradient(135deg, #00b4db, #0083b0); /* สีฟ้าไล่เฉด */
-  color: #ffffff;
-  border-bottom-right-radius: 2px; /* มุมขวาล่างแหลมเล็กน้อย */
-  box-shadow: 0 4px 15px rgba(0, 180, 219, 0.3); /* เงาสีฟ้า */
-}
-
-/* สไตล์ของ AI (ชิดซ้าย) */
-.chat-bubble.assistant {
-  align-self: flex-start; /* ดันไปซ้าย */
-  background-color: #2a2a2a; /* สีเทาเข้ม */
-  color: #e0e0e0;
-  border: 1px solid #333;
-  border-bottom-left-radius: 2px; /* มุมซ้ายล่างแหลม */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* --- INPUT AREA --- */
-.input-container {
-  margin: 0 20px;
-  padding: 10px;
-  background-color: #1e1e1e;
-  border-radius: 16px;
-  border: 1px solid #333;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-}
-
-.chat-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1rem;
-  outline: none;
-  font-family: inherit;
-}
-
-.send-btn {
-  background-color: #00e5ff; /* สีเดียวกับ icon */
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #000;
-}
-
-.send-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 10px #00e5ff;
-}
-
-.send-btn:disabled {
-  background-color: #333;
-  cursor: not-allowed;
-  color: #666;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.send-icon.flying {
+  animation: flyAway 0.6s ease-in-out forwards;
 }
 
 /* Loading Dots */
@@ -444,15 +342,17 @@ body {
   gap: 4px;
 }
 .dot {
-  width: 6px;
-  height: 6px;
-  background-color: #fff;
-  border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out;
+  width: 5px;
+  height: 5px;
+  background-color: #000; /* สีจุดดำ ตัดกับปุ่มสีฟ้า */
+  display: inline-block;
+  animation: pixelBounce 1s infinite;
+  image-rendering: pixelated;
 }
-.dot:nth-child(1) { animation-delay: -0.32s; }
-.dot:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pixelBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }

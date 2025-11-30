@@ -1,6 +1,6 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // 1. เพิ่ม useRef
 import { LuSend } from "react-icons/lu";
-import "../components/Chatbot.css";
+import "../components/Chatbot.css"; // หรือ path ที่คุณเก็บ css ไว้
 
 /* -------------------- SVG ICONS -------------------- */
 const Icons = {
@@ -9,13 +9,11 @@ const Icons = {
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
     </svg>
   ),
-
   Chat: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   ),
-
   Team: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -24,7 +22,6 @@ const Icons = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
-
   Settings: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="3" />
@@ -45,24 +42,36 @@ const TeamDashboard: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => {
-  const saved = localStorage.getItem("chat_history");
-  if (saved) {
-    return JSON.parse(saved);
-  }
-  return [
-    {
-      role: "assistant",
-      content: "สวัสดี! เราคือทีม AI ของ K ลองถามอะไรเราดูได้เลยนะ!",
-    },
-  ];
-});
+    const saved = localStorage.getItem("chat_history");
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [
+      {
+        role: "assistant",
+        content: "สวัสดี! เราคือทีม AI ของ K ลองถามอะไรเราดูได้เลยนะ!",
+      },
+    ];
+  });
 
-// 2. เพิ่ม useEffect (เพื่อให้บันทึกทุกครั้งที่มีข้อความใหม่)
-useEffect(() => {
-  localStorage.setItem("chat_history", JSON.stringify(messages));
-}, [messages]);
+  // 2. สร้าง Ref สำหรับจุดต่ำสุดของแชท
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  /* -------- SEND HANDLER: ยิงไป /api/chat -------- */
+  // 3. ฟังก์ชันเลื่อนลงอัตโนมัติ
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // 4. เรียกใช้เมื่อ messages เปลี่ยนแปลง
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem("chat_history", JSON.stringify(messages));
+  }, [messages]);
+
+  /* -------- SEND HANDLER -------- */
   const handleSend = async () => {
     if (!inputValue.trim() || isSending || isWaiting) return;
 
@@ -72,34 +81,29 @@ useEffect(() => {
     setMessages((prev) => [...prev, { role: "user", content: text }]);
     setInputValue("");
 
-    // animation icon ส่ง
     setIsSending(true);
     setTimeout(() => setIsSending(false), 600);
 
     setIsWaiting(true);
     try {
       const res = await fetch("/api/chat", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text 
-          , history: messages
-        }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history: messages }),
       });
 
       if (!res.ok) {
-        console.error("API error status:", res.status);
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: "เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (status " + res.status + ")",
+            content: `เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (status ${res.status})`,
           },
         ]);
         return;
       }
 
       const data = await res.json();
-
       setMessages((prev) => [
         ...prev,
         {
@@ -133,19 +137,10 @@ useEffect(() => {
     <div className="dashboard-container">
       <aside className="sidebar">
         <div className="logo-box">AI</div>
-        <div className="nav-icon">
-          <Icons.Home />
-        </div>
-        <div className="nav-icon active">
-          <Icons.Team />
-        </div>
-        <div className="nav-icon">
-          <Icons.Chat />
-        </div>
-        <div
-          style={{ marginTop: "auto", marginBottom: "20px" }}
-          className="nav-icon"
-        >
+        <div className="nav-icon"><Icons.Home /></div>
+        <div className="nav-icon active"><Icons.Team /></div>
+        <div className="nav-icon"><Icons.Chat /></div>
+        <div style={{ marginTop: "auto", marginBottom: "20px" }} className="nav-icon">
           <Icons.Settings />
         </div>
       </aside>
@@ -163,8 +158,10 @@ useEffect(() => {
           </div>
         </header>
 
-        {/* CHAT HISTORY */}
+        {/* --- CHAT SECTION --- */}
         <section className="chat-section">
+          
+          {/* 1. HISTORY ZONE (Scrollable) */}
           <div className="chat-history">
             {messages.map((msg, idx) => (
               <div
@@ -176,16 +173,17 @@ useEffect(() => {
                 {msg.content}
               </div>
             ))}
+            
+            {/* 5. จุดอ้างอิงสำหรับ Auto Scroll (มองไม่เห็น) */}
+            <div ref={chatEndRef} />
           </div>
 
-          {/* CHAT INPUT */}
+          {/* 2. INPUT ZONE (Fixed Bottom) */}
           <div className="input-container">
             <input
               type="text"
               className="chat-input"
-              placeholder={
-                isWaiting ? "AI is thinking..." : "Ask me anything..."
-              }
+              placeholder={isWaiting ? "AI is thinking..." : "Ask me anything..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -210,6 +208,7 @@ useEffect(() => {
               )}
             </button>
           </div>
+          
         </section>
       </main>
     </div>

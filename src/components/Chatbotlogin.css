@@ -1,0 +1,190 @@
+/* AuthPage.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Press+Start+2P&display=swap');
+
+:root {
+  --bg-dark: #050505;
+  --card-bg: rgba(30, 30, 30, 0.6);
+  --border-color: #333;
+  --accent-cyan: #00E5FF;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-dark);
+}
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  
+  /* Background Grid แบบเดียวกับ Dashboard */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Card ตรงกลาง */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 40px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: floatUp 0.8s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Decoration: เส้นด้านบนสไตล์ 8-bit */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-cyan), transparent);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-title {
+  font-size: 28px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  color: var(--text-secondary);
+  width: 20px;
+  height: 20px;
+  transition: color 0.3s;
+}
+
+.auth-input {
+  width: 100%;
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid var(--border-color);
+  padding: 14px 14px 14px 45px; /* เว้นที่ให้ icon */
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.auth-input:focus {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.auth-input:focus + .input-icon {
+  color: var(--accent-cyan);
+}
+
+/* ปุ่มหลัก */
+.auth-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-cyan);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+ 
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
+}
+
+.auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+}
+
+.auth-btn:active {
+  transform: scale(0.98);
+}
+
+/* Links & Toggles */
+.forgot-password {
+  display: block;
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 20px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password:hover {
+  color: var(--accent-cyan);
+}
+
+.toggle-text {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.toggle-link {
+  color: var(--accent-cyan);
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 5px;
+  position: relative;
+}
+
+.toggle-link:hover {
+  text-decoration: underline;
+}
+
+/* Animation สำหรับสลับฟอร์ม */
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
