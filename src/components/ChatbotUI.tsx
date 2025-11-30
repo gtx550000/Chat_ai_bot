@@ -1,280 +1,219 @@
-// Chatbot.tsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import "./Chatbot.css";
+import React, { useState,useEffect } from "react";
+import { LuSend } from "react-icons/lu";
+import "../components/Chatbot.css";
 
-interface Message {
-  id: string;
-  text: string;
-  sender: "user" | "bot" | "system";
-  avatar: string;
-}
+/* -------------------- SVG ICONS -------------------- */
+const Icons = {
+  Home: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  ),
 
-// ========== CONFIG ==========
-const WEBHOOK_URL =
-  import.meta?.env?.VITE_N8N_WEBHOOK_URL ||
-  (window as any)?.VITE_N8N_WEBHOOK_URL ||
-  "";
+  Chat: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
 
-const CHAT_TRIGGER_URL =
-  import.meta?.env?.VITE_N8N_CHAT_TRIGGER_URL ||
-  (window as any)?.VITE_N8N_CHAT_TRIGGER_URL ||
-  "";
+  Team: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
 
-const MODE: "chat-trigger" | "webhook" =
-  CHAT_TRIGGER_URL ? "chat-trigger" : "webhook";
-
-const WEBHOOK_SECRET_HEADER_NAME =
-  import.meta?.env?.VITE_N8N_WEBHOOK_HEADER_NAME || "";
-const WEBHOOK_SECRET_HEADER_VALUE =
-  import.meta?.env?.VITE_N8N_WEBHOOK_HEADER_VALUE || "";
-
-const CHAT_INPUT_KEY =
-  import.meta?.env?.VITE_N8N_CHAT_INPUT_KEY || "chatInput";
-const CHAT_SESSION_KEY =
-  import.meta?.env?.VITE_N8N_CHAT_SESSION_KEY || "sessionId";
-const CHAT_ENABLE_STREAMING =
-  (import.meta?.env?.VITE_N8N_CHAT_STREAMING || "false").toLowerCase() ===
-  "true";
-
-// ========== UTILS ==========
-const getOrCreateSessionId = (key = "chat.sid") => {
-  let sid = localStorage.getItem(key);
-  if (!sid) {
-    sid = crypto.randomUUID();
-    localStorage.setItem(key, sid);
-  }
-  return sid;
+  Settings: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0 0-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 11h.09A1.65 1.65 0 0 0 10 9.49V9a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09c0 .63.33 1.25 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 15z" />
+    </svg>
+  ),
 };
 
-// helper: พยายามอ่าน response ไม่ว่าจะมาเป็น JSON หรือ text
-async function readReply(res: Response) {
-  // ถ้า content-type เป็น JSON อ่านเป็น JSON
-  const ctype = res.headers.get("content-type") || "";
-  if (ctype.includes("application/json")) {
-    const data = await res.json().catch(() => ({} as any));
-    // รองรับหลาย key: reply / message / text
-    return (data?.reply ?? data?.message ?? data?.text ?? "").toString();
+/* -------------------- TYPES -------------------- */
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+/* -------------------- COMPONENT -------------------- */
+const TeamDashboard: React.FC = () => {
+  const [inputValue, setInputValue] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [messages, setMessages] = useState<Message[]>(() => {
+  const saved = localStorage.getItem("chat_history");
+  if (saved) {
+    return JSON.parse(saved);
   }
-  // ไม่ใช่ JSON ก็อ่านเป็น text
-  const txt = await res.text();
-  try {
-    // บางกรณี server ส่ง string ที่เป็น JSON -> ลอง parse
-    const j = JSON.parse(txt);
-    return (j?.reply ?? j?.message ?? j?.text ?? txt).toString();
-  } catch {
-    return txt || "(ไม่มีคำตอบ)";
-  }
-}
+  return [
+    {
+      role: "assistant",
+      content: "สวัสดี! เราคือทีม AI ของ K ลองถามอะไรเราดูได้เลยนะ!",
+    },
+  ];
+});
 
-const Chatbot: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: crypto.randomUUID(), text: "สวัสดีครับ/ค่ะ มีอะไรให้ช่วยไหม?", sender: "bot", avatar: "🤖" },
-  ]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const sessionId = useMemo(() => getOrCreateSessionId(), []);
-console.log("ENV WEBHOOK URL:", import.meta.env.VITE_N8N_WEBHOOK_URL);
+// 2. เพิ่ม useEffect (เพื่อให้บันทึกทุกครั้งที่มีข้อความใหม่)
+useEffect(() => {
+  localStorage.setItem("chat_history", JSON.stringify(messages));
+}, [messages]);
 
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isTyping]);
-
-  // ---------- SENDER (Webhook โหมดหลัก) ----------
-  const sendViaWebhook = async (text: string) => {
-    if (!WEBHOOK_URL) throw new Error("ยังไม่ได้ตั้งค่า VITE_N8N_WEBHOOK_URL");
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-    if (WEBHOOK_SECRET_HEADER_NAME && WEBHOOK_SECRET_HEADER_VALUE) {
-      headers[WEBHOOK_SECRET_HEADER_NAME] = WEBHOOK_SECRET_HEADER_VALUE;
-    }
-
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 20000);
-
-    const res = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers,
-      signal: ctrl.signal,
-      body: JSON.stringify({
-        sessionId,
-        message: text,
-        metadata: {
-          path: window.location.pathname,
-          userAgent: navigator.userAgent,
-        },
-      }),
-    }).finally(() => clearTimeout(timer));
-
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${t}`);
-    }
-
-    const reply = await readReply(res);
-    return reply || "(ไม่มีคำตอบ)";
-  };
-
-  // ---------- SENDER (Chat Trigger: ใช้เฉพาะถ้าตั้งค่า URL ไว้) ----------
-  const sendViaChatTrigger = async (text: string) => {
-    if (!CHAT_TRIGGER_URL) throw new Error("ยังไม่ได้ตั้งค่า VITE_N8N_CHAT_TRIGGER_URL");
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
-    const body: Record<string, any> = {
-      action: "sendMessage",
-      [CHAT_INPUT_KEY]: text,
-      [CHAT_SESSION_KEY]: sessionId,
-      metadata: {
-        path: window.location.pathname,
-        userAgent: navigator.userAgent,
-      },
-    };
-
-    if (CHAT_ENABLE_STREAMING) {
-      try {
-        const res = await fetch(CHAT_TRIGGER_URL, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ ...body, stream: true }),
-        });
-
-        const ctype = res.headers.get("content-type") || "";
-        if (!ctype.includes("text/event-stream") && !ctype.includes("text/plain")) {
-          return await readReply(res);
-        }
-
-        const reader = res.body?.getReader();
-        if (!reader) return await readReply(res);
-
-        let fullText = "";
-        const dec = new TextDecoder();
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          fullText += dec.decode(value);
-        }
-        return fullText.trim() || "(ไม่มีคำตอบ)";
-      } catch {
-        // ถ้าสตรีมพัง fallback เป็น non-stream
-      }
-    }
-
-    const res = await fetch(CHAT_TRIGGER_URL, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${t}`);
-    }
-    return await readReply(res);
-  };
-
-  const sendToN8n = async (text: string) =>
-    MODE === "chat-trigger" ? sendViaChatTrigger(text) : sendViaWebhook(text);
-
-  // ---------- UI ----------
+  /* -------- SEND HANDLER: ยิงไป /api/chat -------- */
   const handleSend = async () => {
-    const text = input.trim();
-    if (!text) return;
+    if (!inputValue.trim() || isSending || isWaiting) return;
 
-    const userMsg: Message = { id: crypto.randomUUID(), text, sender: "user", avatar: "🧑" };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setError(null);
-    setIsTyping(true);
+    const text = inputValue.trim();
 
+    // เก็บข้อความ user
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
+    setInputValue("");
+
+    // animation icon ส่ง
+    setIsSending(true);
+    setTimeout(() => setIsSending(false), 600);
+
+    setIsWaiting(true);
     try {
-      const reply = await sendToN8n(text);
-      const botMsg: Message = { id: crypto.randomUUID(), text: reply, sender: "bot", avatar: "🤖" };
-      setMessages((prev) => [...prev, botMsg]);
-    } catch (e: any) {
-      setError(e?.message || "ส่งข้อความไม่สำเร็จ");
-      const sysMsg: Message = { id: crypto.randomUUID(), text: "ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อ", sender: "system", avatar: "⚠️" };
-      setMessages((prev) => [...prev, sysMsg]);
+      const res = await fetch("/api/chat", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text 
+          , history: messages
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("API error status:", res.status);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (status " + res.status + ")",
+          },
+        ]);
+        return;
+      }
+
+      const data = await res.json();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.reply || "AI ไม่ได้ส่งข้อความกลับมา",
+        },
+      ]);
+    } catch (err) {
+      console.error("Error calling /api/chat:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "เกิดข้อผิดพลาดในการเชื่อมต่อ API",
+        },
+      ]);
     } finally {
-      setIsTyping(false);
+      setIsWaiting(false);
     }
   };
 
-  const onKeyDown: React.KeyboardEventHandler<HTMLInputElement> = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleSend();
     }
   };
 
+  /* -------------------- UI -------------------- */
   return (
-    <div className="chatbot-container">
-      <header className="chatbot-header">
-        <div className="header-left">
-          <span className="back-arrow" role="button" aria-label="back">←</span>
-          <span className="header-title">Chatbot</span>
+    <div className="dashboard-container">
+      <aside className="sidebar">
+        <div className="logo-box">AI</div>
+        <div className="nav-icon">
+          <Icons.Home />
         </div>
-        <div className="header-right">
-          <span className="icon" title={MODE === "chat-trigger" ? "n8n Chat Trigger" : "Webhook"}>
-            {MODE === "chat-trigger" ? "⚡" : "✓"}
-          </span>
-          <span className="icon" title="close">✕</span>
+        <div className="nav-icon active">
+          <Icons.Team />
         </div>
-      </header>
+        <div className="nav-icon">
+          <Icons.Chat />
+        </div>
+        <div
+          style={{ marginTop: "auto", marginBottom: "20px" }}
+          className="nav-icon"
+        >
+          <Icons.Settings />
+        </div>
+      </aside>
 
-      <div ref={listRef} className="chat-messages">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`message-row ${msg.sender}`}>
-            <div className="avatar">{msg.avatar}</div>
-            <div className="message-bubble"><p>{msg.text}</p></div>
+      <main className="main-content">
+        <header className="header-section">
+          <h1 className="welcome-text">Hey! User</h1>
+          <h2 className="sub-header">Meet our Creators</h2>
+
+          <div className="filter-tags">
+            <span className="tag active">All Team</span>
+            <span className="tag">Developers</span>
+            <span className="tag">Designers</span>
+            <span className="tag">AI Logic</span>
           </div>
-        ))}
+        </header>
 
-        {isTyping && (
-          <div className="message-row bot">
-            <div className="avatar">🤖</div>
-            <div className="message-bubble typing">
-              <span className="dot" /><span className="dot" /><span className="dot" />
-            </div>
+        {/* CHAT HISTORY */}
+        <section className="chat-section">
+          <div className="chat-history">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`chat-bubble ${
+                  msg.role === "user" ? "user" : "assistant"
+                }`}
+              >
+                {msg.content}
+              </div>
+            ))}
           </div>
-        )}
-      </div>
 
-      <div className="mood-understanding-bar">
-        <div className="bar-label">MOOD UNDERSTANDING</div>
-      </div>
+          {/* CHAT INPUT */}
+          <div className="input-container">
+            <input
+              type="text"
+              className="chat-input"
+              placeholder={
+                isWaiting ? "AI is thinking..." : "Ask me anything..."
+              }
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isWaiting}
+            />
 
-      {error && <div className="error-line">⚠️ {error}</div>}
-
-      <div className="input-area">
-        <div className="input-field-wrapper">
-          <input
-            type="text"
-            placeholder="Inpt:"
-            className="input-field"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            disabled={isTyping}
-            aria-label="ข้อความ"
-          />
-          <button className="input-icon" type="button" title="attach image" disabled={isTyping}>📷</button>
-        </div>
-        <div className="input-buttons">
-          <button className="input-icon" onClick={handleSend} disabled={!input.trim() || isTyping} title="send">▶️</button>
-          <button className="button emoji-button" title="emoji">🙂</button>
-          <button className="button attachment-button" title="attach">📎</button>
-        </div>
-      </div>
+            <button
+              className="send-btn"
+              onClick={handleSend}
+              disabled={isWaiting || isSending}
+            >
+              {isWaiting ? (
+                <div className="loading-indicator">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
+              ) : (
+                <div className={`send-icon ${isSending ? "flying" : ""}`}>
+                  <LuSend />
+                </div>
+              )}
+            </button>
+          </div>
+        </section>
+      </main>
     </div>
   );
 };
 
-export default Chatbot;
+export default TeamDashboard;
